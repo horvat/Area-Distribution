@@ -1,4 +1,4 @@
-function DA = swellfrac_fsd(A,D,lambda,Yg,target,Spectrum,dt)
+function DA = swellfrac_fsd(A,D,lambda,Yg,target,Spectrum)
 % function DA = swellfrac_fsd(A,lambda,H)
 % This function computes the change in the area distribution due to swell
 % fracture, by incorporating wave attenuation effects and effects due to
@@ -65,16 +65,9 @@ DA = Loss + Gain;
 % end
 
 % for i = 2:numbins-1
-%     qDA = .25*DA(i); 
-%     if dt*(DA(i-1) + .25*DA(i)) + A(i-1) > 0
 %     DA(i-1) = DA(i-1) + .25*DA(i); 
-%     DA(i) = DA(i) - qDA;
-%     end
-%     if dt*(DA(i+1) + .25*DA(i)) + A(i) > 0
 %     DA(i+1) = DA(i+1) + .25*DA(i);
-%     
-%     DA(i) = DA(i) - qDA;
-%     end
+%     DA(i) = .5*DA(i); 
 % end
 end
 

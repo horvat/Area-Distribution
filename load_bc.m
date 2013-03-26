@@ -3,7 +3,10 @@ nbins = length(D);
 A2 = ones(1,nbins)/(nbins); 
 A1 = D.^(-.5) + D.^(-2)*sin(t);
 A1(1) = 1;
+A1 = ones(size(A1));
 A1 = A1/sum(A1);
+
+
 A2 = A1;
 V1 = -.1;% +.075*sin(t); %m/s down
 V2 = -.1;%+ .075*cos(t); %m/s down

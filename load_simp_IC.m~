@@ -1,20 +1,17 @@
-%function [A0,T,D,H,g,f,shiftra,shiftri,Yg,lambda,Spectrum,target,forcingperiod] = load_simp_IC(nbins)
+function [A0,T,D,H,g,f,shiftra,shiftri,epsri,epsra,Yg,lambda,Spectrum,target,forcingperiod,Multri,Multra] = load_simp_IC(nbins,version)
  
-D = logspace(0,2,nbins); %Bin Values, Include 0 and 1
- A0(1) = .5;
- for i = 2:nbins
-     A0(i) = .5*A0(i-1);
- end
- A0(1) = .1; % No Open Water in Pack
- %Power Law w/ exponent
-% A0(1) = .5; %Open water fraction
-% A0(round(nbins/2)) = .25; %put a bunch in one part
- A0 = A0/sum(A0);
+D = logspace(0,2.301,nbins); %Bin Values, Include 0 and 1
 
- T =-3; %Init Temp
+Dquart = D(3*ceil(nbins/4)); 
+
+A0 = normpdf(D,Dquart,Dquart/4) + normpdf(D,Dquart*2,Dquart); 
+ 
+A0 = A0/sum(A0); 
+ 
  
 forcingperiod = 500;
- 
+
+T =-3; %Init Temp
  
 Have = 1; %m, average thickness
 %Thickness Categories
@@ -30,7 +27,7 @@ g = lognpdf(H,mu,sigma);
 g = g/sum(g);
 
 % Homogeneity
-f = .5;
+f = 0;
 
 %This is just an estimate till I come up with a good way of defining the
 %homogeneity of the ice pack.
@@ -42,8 +39,72 @@ Tp = 10;
 % k1 = sqrt(3/2);
 % k2 = sqrt(6/5);
 
-k1 = sqrt(3/2);
-k2 = sqrt(5);
+if version == 2
+    
+    % These are now matrices since this is a two-floe interaction
+    
+    shiftra = zeros(nbins,nbins);
+    shiftri = shiftra;
+    
+    % The assumption is: two pieces come together
+    % The smallest of the two has some part of it turned into the ridge
+    % (This is no different than saying both ridge, since they'll combine)
+    % r percent of the original piece ridges/rafts
+    % This turns into a ridge of height k times the original height
+    % Therefore the original piece has an area which is now: 
+    % A1 = (1-r)A1 + rA1 --> (1-r)A1 + (r/k)A1 = (1 - (k-1)r/k)A1 = A1'
+    % And the total area becomes A2+A1 --> A2 + A1'
+    % Plus an open water term
+    
+ % In ridging, k ~ 5 and r ~ .25 So a quarter of the incident piece is
+ % turned into a ridge
+ % In rafting, k ~ 2 and r ~ 1 So the entire piece is turned into a double
+ % thick piece. Or, the whole piece uplifts onto the other piece and half
+ % of it remains. Same idea. 
+ 
+    % This gives for the new diameter:
+    % dnew = (d1^2 + (1 - (k-1)r/k)d2^2)^(1/2)
+    kri = 5;
+    kra = 2; 
+    rri = .25;
+    rra = 1;
+    
+    fracri = 4/5;
+    fracra = 1/2;
+    
+    epsri = sqrt(1 - fracri);
+    epsra = sqrt(1 - fracra); 
+    for i = 2:nbins
+        for j = i:nbins
+            dnewri = sqrt(D(j)^2 + fracri*D(i)^2); 
+            dnewra = sqrt(D(j)^2 + fracra*D(i)^2);
+            
+            
+            rashift = (D - dnewra); 
+            rishift = (D - dnewri); 
+            
+            RA = rashift > 0; 
+            RI = rishift > 0;
+            
+            if max(RA) == 0; 
+                shiftra(i,j) = nbins;
+            else
+                shiftra(i,j) = find(RA == 1, 1 );
+            end
+            
+            if max(RI) == 0
+                shiftri(i,j) = nbins;
+            else
+                shiftri(i,j) = find(RI == 1, 1 );
+            end
+        end
+    end
+ 
+else
+    
+    % Original Version shift matrices
+    k1 = sqrt(3/2);
+    k2 = sqrt(5);
 
 %Shift matrices for rafting/ridging
     for i = 1:nbins
@@ -69,9 +130,16 @@ k2 = sqrt(5);
      % [~,shiftri(i)] = min(rishift>0);
     end
     
+end
+    
  %UNCOMMENT THIS LINE IF WE WANT THE OPEN WATER NOT TO RIDGE/RAFT
     %shiftri(1) = 1;
 %shiftra(1) = 1;
+
+Multri = 1./(bsxfun(@plus,D.^2,(D').^2)./bsxfun(@plus,fracri*D.^2,(D').^2)); 
+Multra = 1./(bsxfun(@plus,D.^2,(D').^2)./bsxfun(@plus,fracra*D.^2,(D').^2)); 
+
+
 %% Doing stuff for the swell fracture
 
 nbins = length(D); %# of area bins
@@ -137,6 +205,4 @@ for i = 1:length(lambda)
         target(i) = find(SH == 1,1,'last');
 end
 
-%% Initialize Distribution 
-
-A = A0;
+end

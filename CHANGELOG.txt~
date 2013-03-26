@@ -8,8 +8,9 @@
 % - Created redist_fsd_v2, which instead of presuming each mechanical int.
 % ridged into a larger category, actually examines the larger categories
 % Finds out which will interact and uses that to judge the new piece size
-% Importantly, redefines the participation function to be more of an overlap 
-% function instead of being linearly related to the cdf
+% Importantly, redefines the participation function to be more of an 
+%  overlap function instead of being linearly related to the cdf as it was 
+% before
 
 % load_simp_IC
 % - Created a whole section dedicated to explaining the shift matrix for 

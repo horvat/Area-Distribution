@@ -15,12 +15,12 @@ function plotFSD(X1, YMatrix1, X2, YMatrix2, YMatrix3, YMatrix4,YMatrix5,time,sa
 figure1 = figure;
 
 % Create subplot
-subplot1 = subplot(2,2,1,'Parent',figure1,'YScale','log','YMinorTick','on');
+subplot1 = subplot(2,2,1,'Parent',figure1,'XScale','log','YScale','log','YMinorTick','on');
 box(subplot1,'on');
 hold(subplot1,'all');
 
 % Create multiple lines using matrix input to semilogy
-semilogy1 = semilogy(X1,YMatrix1,'Parent',subplot1,'LineWidth',2);
+semilogy1 = semilogx(X1,YMatrix1,'Parent',subplot1,'LineWidth',2);
 set(semilogy1(1),'Color',[1 0 0],'DisplayName',sprintf('T = %d',time));
 set(semilogy1(2),'Color',[0 1 0],'DisplayName','T = 0');
 set(semilogy1(3),'Marker','o','LineStyle','none','Color',[0 0 1],...
@@ -45,6 +45,8 @@ subplot2 = subplot(2,2,2,'Parent',figure1,'YScale','log','YMinorTick','on');
 box(subplot2,'on');
 hold(subplot2,'all');
 
+%% 
+
 % Create multiple lines using matrix input to semilogy
 semilogy2 = semilogy(X2,YMatrix2,'Parent',subplot2,'LineWidth',2);
 set(semilogy2(1),'Color',[0 1 0],'DisplayName','1');
@@ -66,9 +68,13 @@ title('Relative Area Change to advection','FontSize',16,...
 legend(subplot2,'show');
 
 % Create subplot
+
+%% 
+
 subplot3 = subplot(2,2,3,'Parent',figure1,'YScale','log','YMinorTick','on');
 box(subplot3,'on');
 hold(subplot3,'all');
+
 
 % Create multiple lines using matrix input to semilogy
 semilogy3 = semilogy(X2,YMatrix3,'Parent',subplot3,'LineWidth',2);
@@ -88,6 +94,8 @@ title('Total Area change','FontSize',16,'FontName','Hoefler Text');
 
 % Create legend
 legend(subplot3,'show');
+
+%% 
 
 % Create subplot
 subplot4 = subplot(2,2,4,'Parent',figure1,'YScale','log','YMinorTick','on',...
