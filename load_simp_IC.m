@@ -1,13 +1,19 @@
-function [A0,T,D,H,g,f,shiftra,shiftri,Yg,lambda,Spectrum,target] = load_simp_IC(nbins)
+function [A0,T,D,H,g,f,shiftra,shiftri,Yg,lambda,Spectrum,target,forcingperiod] = load_simp_IC(nbins)
  
 D = logspace(0,2,nbins); %Bin Values, Include 0 and 1
- A0 = (D.^(-2)); %Power Law w/ exponent
- A0(1) = .25; %Open water fraction
+ A0(1) = .5;
+ for i = 2:nbins
+     A0(i) = .5*A0(i-1);
+ end
+ A0(1) = .1; % No Open Water in Pack
+ %Power Law w/ exponent
+% A0(1) = .5; %Open water fraction
 % A0(round(nbins/2)) = .25; %put a bunch in one part
  A0 = A0/sum(A0);
 
- T = 3; %Init Temp
+ T =-3; %Init Temp
  
+forcingperiod = 500;
  
  
 Have = 1; %m, average thickness
@@ -20,7 +26,8 @@ H = logspace(0,log(5),nbins);
 % and deviation .25
 mu = log(Have) - 1/32;
 sigma = .25;
-g = lognpdf(D,mu,sigma);
+g = lognpdf(H,mu,sigma);
+g = g/sum(g);
 
 % Homogeneity
 f = .5;
@@ -32,7 +39,10 @@ f = .5;
 Tp = 10;
 
 % Coefficients for rafting/ridging
-k1 = 2/sqrt(3);
+% k1 = sqrt(3/2);
+% k2 = sqrt(6/5);
+
+k1 = sqrt(3/2);
 k2 = sqrt(5);
 
 %Shift matrices for rafting/ridging
@@ -58,7 +68,10 @@ k2 = sqrt(5);
      % [~,shiftra(i)] = min(rashift>0); %Effectively performs the role of the delta function
      % [~,shiftri(i)] = min(rishift>0);
     end
-
+    
+ %UNCOMMENT THIS LINE IF WE WANT THE OPEN WATER NOT TO RIDGE/RAFT
+    %shiftri(1) = 1;
+%shiftra(1) = 1;
 %% Doing stuff for the swell fracture
 
 nbins = length(D); %# of area bins
@@ -107,9 +120,10 @@ Acrit = min(Aecrit,Ascrit);
     
 %% Calculate Stress/Strain Failure Percentage from H
 Yg = 0*lambda;
-
 % At each lambda and h, does it meet the critical threshold?
-sig = bsxfun(@gt,Amp,Acrit); 
+
+sig = bsxfun(@gt,Amp,Acrit);
+
 % If so, add to Yg the value of its percentage of the thickness dist
 
 Yg = g*sig; % THIS MAY BE WRONG!!! CHECK 

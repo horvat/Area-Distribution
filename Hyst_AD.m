@@ -49,7 +49,7 @@ dt = 1; %Time interval
 nt = Ttotal/dt; %Number of iterations
 Time = linspace(0,dt*nt,nt); %Time vector
 nbins = 20; %Number of bins for Area Distribution
-tol = 1e-4;
+tol = 1e-5;
 
 disp(sprintf('Computing the FSD with a steady-state tolerance of %d for up to %d seconds',tol,Ttotal))
 
@@ -107,30 +107,38 @@ Vals = zeros(round(nt/dumpfreq),nbins*4);
 Vals = reshape(Vals,[round(nt/dumpfreq) 4 20]);
 Save = zeros(4,nbins);
 Save2 = zeros(1,nbins);
-Aint = 0;
-Melt = 0*D;
-Redist = 0*D;
-Advect = 0*D;
-Swell = 0*D;
-DA = ones(size(D));
-t = 2;
 
-while (t < nt+1+1) && (norm(DA) > tol)
-    [A1,A2,V1,V2,epsdot] = load_bc(D,0);
-    DA = 0*D;
+
+Temps = [linspace(-5,5,10000) linspace(5,-5,10000)];
+for i = 1:length(Temps)
+    
+    if mod(i,1000) == 0
+    disp(sprintf('Iteration %d of %d',i,length(Temps)))
+    end
+    T = Temps(i); 
+    Aint = 0;
+    Melt = 0*D;
+    Redist = 0*D;
+        Advect = 0*D;
+    Swell = 0*D;
+    DA = ones(size(D));
+    t = 2;
+    while (t < 10000) % && (norm(DA) > tol)
+        [A1,A2,V1,V2,epsdot] = load_bc(D,0);
+        DA = 0*D;
     % Compute and updat the ice velocity and stress/strain tensors
     %% [Sigma,Epsdot,Vel,H] = do_ice_dynamics(t,H,Vel,Sigma,Epsdot,Voce,Vair);
     
    
 
     %% Advect Ice - Coded completely, no issues
-    Advect = x_advect_fsd(A,D,V1,V2,A1,A2);       %.5 just because    
-    Aloss = sum(Advect);
+      Advect = x_advect_fsd(A,D,V1,V2,A1,A2);       %.5 just because    
+         Aloss = sum(Advect);
     
     
     
     %% Thermodynamic Melting - Coded
-    Melt = melt_fsd(A,T,D);
+      Melt = melt_fsd(A,T,D);
     %Melt = 0;
     
     
@@ -169,27 +177,33 @@ while (t < nt+1+1) && (norm(DA) > tol)
         end
     end
     
-    Save = Save + dt*[Advect; Melt; Redist; Swell];
     
-    Save2 = Save2 + dt*Swell; 
+ %    Save = Save + dt*[Advect; Melt; Redist; Swell];
     
-    if mod(t,dumpfreq) == 0
-        stats(t/dumpfreq,:) = [norm(Advect) norm(Melt) norm(Melt)/norm(Advect) ...
-         norm(Redist) norm(Redist)/norm(Advect) norm(Swell) ...
-         norm(Swell)/norm(Advect)];
-     
-        sumstats(t/dumpfreq,:) = [A(1) sum(Advect) sum(Melt) ...
-         sum(Redist) sum(Swell) sum(DA)];
-     sumstats2(t/dumpfreq,:) = Swell';
-     
-    Vals(t/dumpfreq,:,:) = [Melt; Redist; Advect;Swell];
-
-    end  
+ %   Save2 = Save2 + dt*Swell; 
+    
+%     if mod(t,dumpfreq) == 0
+%         stats(t/dumpfreq,:) = [norm(Advect) norm(Melt) norm(Melt)/norm(Advect) ...
+%          norm(Redist) norm(Redist)/norm(Advect) norm(Swell) ...
+%          norm(Swell)/norm(Advect)];
+%      
+%         sumstats(t/dumpfreq,:) = [A(1) sum(Advect) sum(Melt) ...
+%          sum(Redist) sum(Swell) sum(DA)];
+%      sumstats2(t/dumpfreq,:) = Swell';
+%      
+%     Vals(t/dumpfreq,:,:) = [Melt; Redist; Advect;Swell];
     t = t + 1;
+    end  
+    
+    Openwater(i) = A(1); 
+    MeanD(i) = mean(A.*D);
+    MeanA(i) = mean(A.*D.*D); 
+    Max(i) = max(A);
+    Dev(i) = std(A); 
 end
-if norm(DA) < tol
-    disp(sprintf('Reached Steady State by t = %d',t*dt));
-end
+% if norm(DA) < tol
+%     disp(sprintf('Reached Steady State by t = %d',t*dt));
+% end
 stats = stats(1:t-1,:);
 Vals = Vals(1:t-1,:,:);
 
@@ -209,17 +223,3 @@ plotFSD(D,[A;A0;A1],Timer', ...
 %Tquit = round((t-1)/dumpfreq);
 
 %plotbalance(D,[A;A0;A1],squeeze(Vals(end,:,:)),t);
- 
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -43,6 +43,13 @@ end
 Loss = sum(Loss,1);
 DA = Loss + Gain;
 
+if max(DA(2:numbins)) ~= 0
+s1 = sum(DA(2:numbins));
+DA(2:numbins) = smooth(DA(2:numbins))';
+s2 = sum(DA(2:numbins));
+DA(2:numbins) = (s1/s2)*DA(2:numbins);
+end
+
 
 end
 

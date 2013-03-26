@@ -1,20 +1,31 @@
 %function [D A DA normDA] = areadistribution 
-% Version 0.2
+% Version 0.1 
 
-%% Changes from version 0.1
+% Changes
 
-% Plotting
-% - Added plotbalance.m, which plots the long-term balance of terms
+% Swell: 
+% - Includes Smoothing for the output results
 
-% Redistribution
-% - Changed k in redist_fsd to allow for open water formation
-% - Added an artificial control in redistribution to handle A(1) = 0; 
-% - Put a multiplier for redistribution inside the redist_f stuff. 
+% Redist: 
+% - Include formulation for open water created in ridging
+% - Open water box does not participate in ridging 
+% - Artificial open water creatinon after ridging to account for above
+% - Reformulated Participation Function
 
-% Swell
-% - Added smoothing of output
+% Melt:
+% - Now uses diff instead of loop to compute derivatives
+% - Changes in 
 
-%%
+% load_simp_IC
+% - Fixed coefficients for rafting/ridging
+% 
+
+
+
+% redistributive modes. 
+
+
+
 
 % This script is the driver for the area distribution code. It simulates
 % the Floe Size Distribution as it is outlined in Chris Horvat's Proposal. 
@@ -43,15 +54,13 @@ clear all
 close all
 
 %% Set parameters
-Ttotal = 5000; %Model time
-dumpfreq = 1; %Frequency of saving
-dt = 1; %Time interval
+Ttotal = 10000; %Model time
+dumpfreq = 100; %Frequency of saving
+dt = 10; %Time interval
 nt = Ttotal/dt; %Number of iterations
 Time = linspace(0,dt*nt,nt); %Time vector
 nbins = 20; %Number of bins for Area Distribution
-tol = 1e-4;
 
-disp(sprintf('Computing the FSD with a steady-state tolerance of %d for up to %d seconds',tol,Ttotal))
 
 %% Initialization
 
@@ -103,8 +112,6 @@ DA = 0;
 stats = zeros(round(nt/dumpfreq),7);
 sumstats = zeros(round(nt/dumpfreq),6);
 sumstats2 = zeros(round(nt/dumpfreq),nbins);
-Vals = zeros(round(nt/dumpfreq),nbins*4);
-Vals = reshape(Vals,[round(nt/dumpfreq) 4 20]);
 Save = zeros(4,nbins);
 Save2 = zeros(1,nbins);
 Aint = 0;
@@ -112,19 +119,16 @@ Melt = 0*D;
 Redist = 0*D;
 Advect = 0*D;
 Swell = 0*D;
-DA = ones(size(D));
-t = 2;
-
-while (t < nt+1+1) && (norm(DA) > tol)
+for t = 2:nt+1
     [A1,A2,V1,V2,epsdot] = load_bc(D,0);
-    DA = 0*D;
+    DA = 0;
     % Compute and updat the ice velocity and stress/strain tensors
     %% [Sigma,Epsdot,Vel,H] = do_ice_dynamics(t,H,Vel,Sigma,Epsdot,Voce,Vair);
     
    
 
     %% Advect Ice - Coded completely, no issues
-    Advect = x_advect_fsd(A,D,V1,V2,A1,A2);       %.5 just because    
+    Advect = .1*x_advect_fsd(A,D,V1,V2,A1,A2);       %.5 just because    
     Aloss = sum(Advect);
     
     
@@ -137,7 +141,7 @@ while (t < nt+1+1) && (norm(DA) > tol)
     
     
     %% Mechanical Redistribution - Coded completely, no issues
-    Redist = redist_fsd(A,epsdot,f,D,shiftra,shiftri);
+    Redist = 10*redist_fsd(A,epsdot,f,D,shiftra,shiftri);
     %[Part Raft Ridge] = Redist_OW_fsd(A,epsdot,f,D,shiftra,shiftri);
     Redist(1) = (Redist(1) - Aloss); % This handles the divergence
     
@@ -146,13 +150,13 @@ while (t < nt+1+1) && (norm(DA) > tol)
     
     %% Swell Fracture - Coded, Runs, maybe not ready
     
-    Swell = swellfrac_fsd(A,D,lambda,Yg,target,Spectrum);
+    Swell = exp(-8)*swellfrac_fsd(A,D,lambda,Yg,target,Spectrum);
 
     
 
     %% We're Done!
-    DA = Advect + Melt + Redist + Swell;
-    Anew = A + dt*DA; 
+    
+    Anew = A + dt*(Advect + Melt + Redist + Swell); 
 
     %% Compute relative magnitude of terms, stats, and bug control
     
@@ -168,7 +172,6 @@ while (t < nt+1+1) && (norm(DA) > tol)
             A = Anew;
         end
     end
-    
     Save = Save + dt*[Advect; Melt; Redist; Swell];
     
     Save2 = Save2 + dt*Swell; 
@@ -181,35 +184,18 @@ while (t < nt+1+1) && (norm(DA) > tol)
         sumstats(t/dumpfreq,:) = [A(1) sum(Advect) sum(Melt) ...
          sum(Redist) sum(Swell) sum(DA)];
      sumstats2(t/dumpfreq,:) = Swell';
-     
-    Vals(t/dumpfreq,:,:) = [Melt; Redist; Advect;Swell];
-
     end  
-    t = t + 1;
+    
 end
-if norm(DA) < tol
-    disp(sprintf('Reached Steady State by t = %d',t*dt));
-end
-stats = stats(1:t-1,:);
-Vals = Vals(1:t-1,:,:);
 
 %% Plot everything
+Saver = Save./(repmat(A0,[4 1]));
 
-saveplots = 0;
+Timer = linspace(0,dt*nt,length(stats(:,1)));
 
-Saver = Save./(repmat(A0,[4 1])) + .0001;
+plotFSD(D,A,A0,A1,stats,abs(Saver),Timer',dt*nt);
 
-Timer = linspace(0,dt*t,length(stats(1:t-1,1)));
 
-plotFSD(D,[A;A0;A1],Timer', ... 
-    [0*Timer + 1;stats(:,3)';stats(:,5)';stats(:,7)'], ... 
-    [stats(:,1)';stats(:,2)';stats(:,4)';stats(:,6)'], ... 
-    abs(Saver)/(dt*nt) + .0000001,squeeze(Vals(end,:,:)),t,saveplots);
-
-%Tquit = round((t-1)/dumpfreq);
-
-%plotbalance(D,[A;A0;A1],squeeze(Vals(end,:,:)),t);
- 
 
 
 

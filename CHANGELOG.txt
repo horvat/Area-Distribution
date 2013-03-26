@@ -1,0 +1,41 @@
+%% Changes from version 0.0
+ 
+
+%% Version 0.1
+ 
+% Redist: 
+% - Include formulation for open water created in ridging. NOT USED YET.
+% - Open water box does not participate in ridging 
+% - Artificial open water creatinon after ridging to account for above
+% - Reformulated Participation Function
+ 
+% Melt:
+% - Now uses diff instead of loop to compute derivatives
+% - Changes in 
+ 
+% load_simp_IC
+% - Fixed coefficients for rafting/ridging
+% - Changes to Initial Temp T -> -3, thickness stuff, wave period, and othe
+% r parameters
+ 
+% load_bc
+% - Velocities fixed to be non-divergent
+
+%% Version 0.2
+
+% Main Driver
+% - Added a tolerance so that the program quits when the changes are less 
+% whatever the tolerance is
+
+% Plotting
+% - Added plotbalance.m, which plots the long-term balance of terms
+% - Deleted createfigure.m, put that functionality into plotFSD.m
+% - Now output files are in Output/*.fig , *.eps, which show the two plots 
+
+% Redistribution
+% - Changed k in redist_fsd to allow for open water formation
+% - Added an artificial control in redistribution to handle A(1) = 0; 
+% - Put a multiplier for redistribution inside the redist_f stuff. 
+
+% Swell
+% - Added smoothing of output

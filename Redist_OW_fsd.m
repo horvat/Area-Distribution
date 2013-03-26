@@ -1,4 +1,4 @@
-function DA = redist_fsd(A,epsdot,f,D,shiftra,shiftri)
+function [DAr DAraft DAridge] = Redist_OW_fsd(A,epsdot,f,D,shiftra,shiftri)
 
 %This function controls the binned redistribution, following the work of
 %Thorndike and others. Redistribution involves both ridging and rafting, as
@@ -13,13 +13,13 @@ function DA = redist_fsd(A,epsdot,f,D,shiftra,shiftri)
 % A and B are the lead opening and lead closing coefficients, respectively
 % P(r) is the participation function
 
-% This code does not create open water explicity. If you would like this
-% functionality, use Redist_OW_fsd.m which does this with variable
-% open-water fractions k1 and k2.
 
-mult = 10; %Artificial multiplier incase we want to boost redist
+% This code ***does*** create open water explicity. If you would like this
+% functionality, use the variables k1 and k2. In each interaction, a piece
+% of ice will convert (1-k1) of its initial area to open water. 
 
-numbins = length(A);
+
+nbins = length(A);
 
 inv = eig(epsdot);
 
@@ -46,19 +46,12 @@ leadclose = .5*(1 - cos(2*theta));
 
 cumA = cumsum(A); %This is the cdf
 
-
-% ***This is the cdf-based participation function
-
-Astar = .8; %From G* = .15 in Thorndike, area less likely to cut off
+Astar = 1; %From G* = .15 in Thorndike, area less likely to cut off
 
 Partic1 = max((1 - cumA/Astar),0);
 if sum(Partic1) > 1
 Partic1 = Partic1/sum(Partic1);
 end
-
-% *** This participation function says we interact with our own class
-
-
 %This would be normalized in a continuous setting
 %Can't participate more than 1 time in an encounter
 %It is not here, so we will just renormalize ourselves
@@ -77,32 +70,28 @@ DAr = -Partic;
 
 %DAr(1) = 0;
 %% Ridging Mode
-k = sqrt(5); % No open water creation explicit in redistribution. 
+k = 1/5;
 
 DAridge = (1-f)*redistmode(shiftri,k,D,Partic);% + .25*redistmode(min(shiftri+1,nbins),k,D,Partic) + .25*redistmode(max(shiftri-1,2),k,D,Partic));
-
 %This has been smoothed. 
 %% Rafting Mode
 
-k = sqrt(3/2);
+k = 1/2;
 
 DAraft = f*redistmode(shiftra,k,D,Partic);
 
-DA = mult*strainmag*leadclose*(DAr + DAridge + DAraft);
+% DAraft = Partic.*DAraft1;
 
-%% If we have no open water, redistribution must be adjusted so it stays that way
+%s1 = sum(DAridge)
+%s2 = sum(DAraft)
+%s3 = sum(DAr)
 
-DA(1) = -sum(DA(2:numbins));
+%sum(DAraft) + sum(DAridge) + sum(DAr)
+DAr = strainmag*leadclose*DAr;
+DAridge = strainmag*leadclose*DAridge;
+DAraft = strainmag*leadclose*DAraft;
 
-[C,I] = min(A + DA);
-
-
-if C < 0 
-    DAo = DA(1);
-    DA(1) = DAo - C; 
-    frac = abs(DA(1)/DAo);
-    DA(2:numbins) = frac*DA(2:numbins);
-end
+%DA = strainmag*leadclose*(DAr + DAridge + DAraft);
 
  end
 

@@ -33,22 +33,15 @@ Therm = Cond + 0*D;
 %% Compute Fluxes 
 dd(1) = 0;
 dfa(1) = 0;
-for i = 2:nbins-1 
-    %No thermo growth of open water... open water is just fixed to be the opposite of the other growth
-    
-    % delta d
-    dd(i) = D(i+1) - D(i);
-   
-    % "Advective" flux in diameter space
-    dfa(i) = A(i+1).*Therm(i+1) - A(i).*Therm(i);
-end
+dd = diff(D);
+dfa = diff(A.*Therm); 
 
 % Handle the final bin
-dd(nbins) = dd(nbins - 1);
-dfa(nbins) = A(nbins).*Therm(nbins); 
-    
+dd = [dd 100*dd(nbins-1)];
+dfa = [dfa -A(nbins).*Therm(nbins)]; 
     
 Melt = dfa./dd;
+
 Melt(1) = -sum(Melt(2:nbins));
 %Done!    
     

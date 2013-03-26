@@ -5,8 +5,8 @@ A1 = D.^(-.5) + D.^(-2)*sin(t);
 A1(1) = 1;
 A1 = A1/sum(A1);
 A2 = A1;
-V1 = -.1;% + .075*sin(t); %m/s down
-V2 = -.2;% + .075*cos(t); %m/s down
+V1 = -.1;% +.075*sin(t); %m/s down
+V2 = -.1;%+ .075*cos(t); %m/s down
 eps = (V1.^2 + V2.^2)^(1/2)/max(D);
 exx = (V1 - V2)/max(D); %Vertical Divergence
 
