@@ -1,4 +1,4 @@
-function plotbalance(X1, YMatrix1, YMatrix2,time)
+function plotbalance(X1, YMatrix1, YMatrix5,time)
 %CREATEFIGURE(X1,YMATRIX1,YMATRIX2)
 %  X1:  vector of x data
 %  YMATRIX1:  matrix of y data
@@ -46,7 +46,7 @@ box(subplot2,'on');
 hold(subplot2,'all');
 
 % Create multiple lines using matrix input to semilogx
-semilogx1 = semilogx(X1,YMatrix2,'Parent',subplot2,'LineWidth',2);
+semilogx1 = semilogx(X1,YMatrix5,'Parent',subplot2,'LineWidth',2);
 set(semilogx1(1),'Color',[0 0.498039215803146 0],'DisplayName','Melt');
 set(semilogx1(2),'Color',[1 0 0],'DisplayName','Redist');
 set(semilogx1(3),'Color',[0 1 0],'DisplayName','Advect');
