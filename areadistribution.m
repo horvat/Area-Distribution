@@ -31,7 +31,7 @@ clear all
 %close all
 
 %% Set parameters
-Ttotal = 500000; %Model time
+Ttotal = 500; %Model time
 dt = 1; %Time interval
 dumpfreq = dt; %Frequency of saving
 nt = Ttotal/dt; %Number of iterations
